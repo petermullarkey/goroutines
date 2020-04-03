@@ -36,6 +36,11 @@ func main() {
 		newInt, _ := strconv.Atoi(s)
 		fullSliceOfInts = append(fullSliceOfInts, newInt)
 	}
+
+}
+
+func sortConcurrentController (fullSliceOfInts []int) []int{
+	n := len(fullSliceOfInts)
 	// slices dicing tricks from https://tour.golang.org/concurrency/2
 	sliceofInts1 := fullSliceOfInts[:n/4] // make([]int,0,n/4)
 	sliceofInts2 := fullSliceOfInts[n/4:n/2] // make([]int,0,n/4)
@@ -64,6 +69,7 @@ func main() {
 	fmt.Println("full partially sorted: ", fullArray)
 	sort.Ints(fullArray)
 	fmt.Println("fully sorted: ", fullArray)
+	return fullArray
 }
 
 func stdSort(sliceToSort []int, wg *sync.WaitGroup) []int{
