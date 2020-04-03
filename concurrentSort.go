@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"strings"
 	"strconv"
+	"sort"
+	"sync"
 )
 
 
@@ -40,64 +42,33 @@ func main() {
 	sliceofInts3 := fullSliceOfInts[n/2:n*3/4] // make([]int,0,n/4)
 	sliceofInts4 := fullSliceOfInts[n*3/4:] // make([]int,0,n/4)
 
-	// slices dicing tricks from https://tour.golang.org/concurrency/2
-	fmt.Println("s1", sliceofInts1)
-	fmt.Println("s2", sliceofInts2)
-	fmt.Println("s3", sliceofInts3)
-	fmt.Println("s4", sliceofInts4)
-	// fmt.Println("Test Swap",sliceofInts1)
-	//Swap(sliceofInts, 3)
+	// fmt.Println("s1", sliceofInts1)
+	// fmt.Println("s2", sliceofInts2)
+	// fmt.Println("s3", sliceofInts3)
+	// fmt.Println("s4", sliceofInts4)
 
-	fmt.Println("now sort the whole thing", sliceofInts1)
-	c := make(chan []int)
-	go BubbleSort(sliceofInts1, c)
-	go BubbleSort(sliceofInts2, c)
-	go BubbleSort(sliceofInts3, c)
-	go BubbleSort(sliceofInts4, c)
-
-	sliceofInts1Sorted := make([]int,0,n/4)
-	sliceofInts1Sorted = <- c
-	fmt.Println("result of slice1", sliceofInts1Sorted)
-	
-	sliceofInts2Sorted := make([]int,0,n/4)
-	sliceofInts2Sorted = <- c
-	fmt.Println("result of slice2", sliceofInts2Sorted)
-	
-	sliceofInts3Sorted := make([]int,0,n/4)
-	sliceofInts3Sorted = <- c
-	fmt.Println("result of slice3", sliceofInts3Sorted)
-
-	sliceofInts4Sorted := make([]int,0,n/4)
-	sliceofInts4Sorted = <- c
-	fmt.Println("result of slice4", sliceofInts4Sorted)
+	fmt.Println("now sort the whole thing", sliceofInts1, sliceofInts2, sliceofInts3, sliceofInts4)
+	// since sorting works in-place, use the Wait approach for Sync, versus the Channel approach
+	var wg sync.WaitGroup
+	wg.Add(4)
+	go stdSort(sliceofInts1, &wg)
+	go stdSort(sliceofInts2, &wg)
+	go stdSort(sliceofInts3, &wg)
+	go stdSort(sliceofInts4, &wg)
+	wg.Wait()
+	var fullArray []int
+	fullArray = append(fullArray,sliceofInts1... )
+	fullArray = append(fullArray,sliceofInts2... )
+	fullArray = append(fullArray,sliceofInts3... )
+	fullArray = append(fullArray,sliceofInts4... )
+	fmt.Println("full partially sorted: ", fullArray)
+	sort.Ints(fullArray)
+	fmt.Println("fully sorted: ", fullArray)
 }
 
-func BubbleSort(sliceToSort []int, c chan []int){
-	fmt.Println(sliceToSort)
-	for i, _:= range sliceToSort {
-		if !sweep(sliceToSort, i) {
-			// fmt.Println(sliceToSort)
-			c <- sliceToSort
-		}
-	}
-}
-func sweep(sliceToSort []int, prevPasses int) bool {
-	didSwap := false
-	for i := 0; i < len(sliceToSort) - prevPasses; i++ {
-		if len(sliceToSort) > i+1 {
-			// fmt.Println("comparing: ", sliceToSort[i], sliceToSort[i+1])
-			if sliceToSort[i] > sliceToSort[i+1] {
-				Swap(sliceToSort, i)
-				didSwap = true
-			}
-		}
-	}
-	return didSwap
-}
-func Swap(sints []int, indx int) {
-	// swap the int at position indx with the one at indx+1
-	intToSwap := sints[indx]
-	sints[indx] = sints[indx+1]
-	sints[indx+1] = intToSwap
-	// fmt.Println("Swapped: ", sints[indx], intToSwap)
-}
+func stdSort(sliceToSort []int, wg *sync.WaitGroup) []int{
+	defer wg.Done()
+	fmt.Println("in conc stdSort: ", sliceToSort)
+	sort.Ints(sliceToSort)
+	return sliceToSort
+} 
